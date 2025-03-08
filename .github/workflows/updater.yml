@@ -1,0 +1,39 @@
+name: Nissan Leaf Widget Updater
+on:
+  schedule:
+    - cron: "21 6 * * *"
+    - cron: "18 14 * * *"
+    - cron: "27 20 * * *"
+  workflow_dispatch:
+jobs:
+  scrape:
+    name: Scrape
+    uses: kevincon/nissan-connect-scraper/.github/workflows/scraper.yml@main
+    with:
+      convert-times-to-timezone: "US/Pacific"
+    secrets:
+      user-id: ${{ secrets.NISSAN_CONNECT_USER_ID }}
+      password: ${{ secrets.NISSAN_CONNECT_PASSWORD }}
+  update:
+    name: Update
+    needs: scrape
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email
+        uses: dawidd6/action-send-mail@v4
+        with:
+          server_address: ${{ secrets.SMTP_SERVER_ADDRESS }}
+          server_port: ${{ secrets.SMTP_SERVER_PORT }}
+          secure: true
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "#nissan-connect"
+          to: trigger@applet.ifttt.com
+          from: "\"Nissan Leaf Widget Updater\" <${{ secrets.SMTP_FROM_EMAIL_ADDRESS }}>"
+          body: |
+            🔌 ${{ needs.scrape.outputs.charger-state }}
+            🔋 ${{ needs.scrape.outputs.battery-state-of-charge }}%
+            🛞 ${{ needs.scrape.outputs.range-minimum }} - ${{ needs.scrape.outputs.range-maximum }} miles
+            🌡️ ${{ needs.scrape.outputs.interior-temperature-range }}
+            ⚡️⏳ ${{ needs.scrape.outputs.level-two-charger-eta }}
+            👀 ${{ needs.scrape.outputs.last-refresh-date }}
