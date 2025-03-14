@@ -1,24 +1,41 @@
 name: Nissan Leaf Widget Updater
 on:
   schedule:
-    - cron: "21 6 * * *"
-    - cron: "18 14 * * *"
-    - cron: "27 20 * * *"
+    - cron: "5 0-7,13-23 * * *" # At minute 5 every hour between 6 am PT and midnight PT, inclusive
   workflow_dispatch:
+concurrency:
+  group: hard-coded-so-only-one-instance-of-this-workflow-runs-at-a-time
+  # We won't cancel in-progress jobs if a new one is triggered, though
+  cancel-in-progress: false
 jobs:
-  scrape:
-    name: Scrape
-    uses: kevincon/nissan-connect-scraper/.github/workflows/scraper.yml@main
-    with:
-      convert-times-to-timezone: "US/Pacific"
-    secrets:
-      user-id: ${{ secrets.NISSAN_CONNECT_USER_ID }}
-      password: ${{ secrets.NISSAN_CONNECT_PASSWORD }}
   update:
     name: Update
-    needs: scrape
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          log-accepted-android-sdk-licenses: false
+      - name: Set up Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tags: ${{ secrets.TAILSCALE_TAGS }}
+      - name: Connect to Android device
+        run: adb connect ${{ secrets.ANDROID_DEVICE_ADB_ADDRESS }}
+      - name: Run and Scrape Nissan Connect
+        id: scrape
+        uses: kevincon/nissan-connect-scraper@v1
+        with:
+          user-id: ${{ secrets.NISSAN_CONNECT_USER_ID }}
+          password: ${{ secrets.NISSAN_CONNECT_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: last_screenshot.png
+          path: last_screenshot.png
+          if-no-files-found: ignore
       - name: Send email
         uses: dawidd6/action-send-mail@v4
         with:
@@ -31,9 +48,9 @@ jobs:
           to: trigger@applet.ifttt.com
           from: "\"Nissan Leaf Widget Updater\" <${{ secrets.SMTP_FROM_EMAIL_ADDRESS }}>"
           body: |
-            🔌 ${{ needs.scrape.outputs.charger-state }}
-            🔋 ${{ needs.scrape.outputs.battery-state-of-charge }}%
-            🛞 ${{ needs.scrape.outputs.range-minimum }} - ${{ needs.scrape.outputs.range-maximum }} miles
-            🌡️ ${{ needs.scrape.outputs.interior-temperature-range }}
-            ⚡️⏳ ${{ needs.scrape.outputs.level-two-charger-eta }}
-            👀 ${{ needs.scrape.outputs.last-refresh-date }}
+            🔌 ${{ steps.scrape.outputs.charger-state }}
+            🔋 ${{ steps.scrape.outputs.battery-state-of-charge }}%
+            🛞 ${{ steps.scrape.outputs.range-minimum }} - ${{ steps.scrape.outputs.range-maximum }} miles
+            🌡️ ${{ steps.scrape.outputs.interior-temperature-range }}
+            ⚡️⏳ ${{ steps.scrape.outputs.level-two-charger-eta }}
+            👀 ${{ steps.scrape.outputs.last-refresh-date }}
