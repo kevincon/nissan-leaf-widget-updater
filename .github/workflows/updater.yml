@@ -1,19 +1,25 @@
 name: Nissan Leaf Widget Updater
 on:
   schedule:
-    - cron: "21 6 * * *"
-    - cron: "18 14 * * *"
-    - cron: "27 20 * * *"
+    - cron: "21 13 * * *" # 6:21 am PT
+    - cron: "18 21 * * *" # 2:18 pm PT
+    - cron: "27 3 * * *" # 8:27 pm PT
   workflow_dispatch:
 jobs:
   scrape:
     name: Scrape
-    uses: kevincon/nissan-connect-scraper/.github/workflows/scraper.yml@main
+    uses: kevincon/nissan-connect-scraper/.github/workflows/scraper.yml@networking
     with:
       convert-times-to-timezone: "US/Pacific"
+      ref: networking
     secrets:
       user-id: ${{ secrets.NISSAN_CONNECT_USER_ID }}
       password: ${{ secrets.NISSAN_CONNECT_PASSWORD }}
+      tailscale-auth-key: ${{ secrets.TAILSCALE_AUTH_KEY }}
+      tailscale-oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+      tailscale-oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+      tailscale-tags: ${{ secrets.TAILSCALE_TAGS }}
+      tailscale-exit-node-name: ${{ secrets.TAILSCALE_EXIT_NODE_NAME }}
   update:
     name: Update
     needs: scrape
