@@ -12,6 +12,9 @@ jobs:
     name: Update
     runs-on: ubuntu-latest
     steps:
+      # The `runner` context is not available in the job-level `env` directive so we set up this variable here instead
+      - name: Set up debug output directory variable
+        run: echo "DEBUG_OUTPUT_FOLDER=${{ runner.temp }}/debug" >> $GITHUB_ENV
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -27,14 +30,19 @@ jobs:
       - name: Run and Scrape Nissan Connect
         id: scrape
         uses: kevincon/nissan-connect-scraper@v1
+        env:
+          DEBUG_OUTPUT_FOLDER: ${{ env.DEBUG_OUTPUT_FOLDER }}
         with:
           user-id: ${{ secrets.NISSAN_CONNECT_USER_ID }}
           password: ${{ secrets.NISSAN_CONNECT_PASSWORD }}
+          debug-out: ${{ env.DEBUG_OUTPUT_FOLDER }}
       - uses: actions/upload-artifact@v4
         if: failure()
+        env:
+          DEBUG_OUTPUT_FOLDER: ${{ env.DEBUG_OUTPUT_FOLDER }}
         with:
-          name: last_screenshot.png
-          path: last_screenshot.png
+          name: debug-output
+          path: ${{ env.DEBUG_OUTPUT_FOLDER }}
           if-no-files-found: ignore
       - name: Send email
         uses: dawidd6/action-send-mail@v4
@@ -48,9 +56,9 @@ jobs:
           to: trigger@applet.ifttt.com
           from: "\"Nissan Leaf Widget Updater\" <${{ secrets.SMTP_FROM_EMAIL_ADDRESS }}>"
           body: |
-            🔌 ${{ steps.scrape.outputs.charger-state }}
             🔋 ${{ steps.scrape.outputs.battery-state-of-charge }}%
             🛞 ${{ steps.scrape.outputs.range-minimum }} - ${{ steps.scrape.outputs.range-maximum }} miles
+            🔌 ${{ steps.scrape.outputs.charger-state }}
             🌡️ ${{ steps.scrape.outputs.interior-temperature-range }}
             ⚡️⏳ ${{ steps.scrape.outputs.level-two-charger-eta }}
             👀 ${{ steps.scrape.outputs.last-refresh-date }}
