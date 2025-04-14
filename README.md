@@ -15,3 +15,5 @@ This repo:
 
 1. calls the [reusable GitHub Action](https://docs.github.com/en/actions/sharing-automations/creating-actions/about-custom-actions) from https://github.com/kevincon/nissan-connect-scraper to scrape information about my [Nissan LEAF®](https://en.wikipedia.org/wiki/Nissan_Leaf) vehicle from the [NissanConnect® Android app](https://play.google.com/store/apps/details?id=com.aqsmartphone.android.nissan)
 1. sends that information to an [IFTTT applet](https://ifttt.com/explore/ifttt_applets) that displays it in a [IFTTT home screen widget](https://ifttt.com/explore/how-to-use-widgets-ios) on my iPhone
+
+See [this blog post](https://kevintechnology.com/posts/leaf-widget/) for more information.
