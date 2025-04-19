@@ -28,7 +28,9 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tags: ${{ secrets.TAILSCALE_TAGS }}
       - name: Connect to Android device
-        run: adb connect ${{ secrets.ANDROID_DEVICE_ADB_ADDRESS }}
+        run: |
+          adb connect ${{ secrets.ANDROID_DEVICE_ADB_ADDRESS }}
+          [[ $(adb get-state) == "device" ]]
       - name: Run and Scrape Nissan Connect
         id: scrape
         uses: kevincon/nissan-connect-scraper@v1
