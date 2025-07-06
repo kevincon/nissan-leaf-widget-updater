@@ -71,9 +71,9 @@ jobs:
           to: trigger@applet.ifttt.com
           from: "\"Nissan Leaf Widget Updater\" <${{ secrets.SMTP_FROM_EMAIL_ADDRESS }}>"
           body: |
-            🔋 ${{ steps.scrape.outputs.battery-state-of-charge }}%
-            🛞 ${{ steps.scrape.outputs.range-minimum }} - ${{ steps.scrape.outputs.range-maximum }} miles
-            🔌 ${{ steps.scrape.outputs.charger-state }}
-            🌡️ ${{ steps.scrape.outputs.interior-temperature-range }}
-            ⚡️⏳ ${{ steps.scrape.outputs.level-two-charger-eta }}
-            👀 ${{ steps.scrape.outputs.last-refresh-date }}
+            🔋 ${{ fromJSON(steps.scrape.outputs.outputs).battery-state-of-charge }}%
+            🛞 ${{ fromJSON(steps.scrape.outputs.outputs).range-minimum }} - ${{ fromJSON(steps.scrape.outputs.outputs).range-maximum }} miles
+            🔌 ${{ fromJSON(steps.scrape.outputs.outputs).charger-state }}
+            🌡️ ${{ fromJSON(steps.scrape.outputs.outputs).interior-temperature-range }}
+            ⚡️⏳ ${{ fromJSON(steps.scrape.outputs.outputs).level-two-charger-eta }}
+            👀 ${{ fromJSON(steps.scrape.outputs.outputs).last-refresh-date }}
