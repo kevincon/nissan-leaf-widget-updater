@@ -31,16 +31,26 @@ jobs:
         run: |
           adb connect ${{ secrets.ANDROID_DEVICE_ADB_ADDRESS }}
           [[ $(adb get-state) == "device" ]]
-      - name: Run and Scrape Nissan Connect
-        id: scrape
+      - name: Set up scraper
+        id: scraper
         uses: kevincon/nissan-connect-scraper@v1
         env:
           DEBUG_OUTPUT_FOLDER: ${{ env.DEBUG_OUTPUT_FOLDER }}
         with:
+          set-up-only: true
           user-id: ${{ secrets.NISSAN_CONNECT_USER_ID }}
           password: ${{ secrets.NISSAN_CONNECT_PASSWORD }}
           last-refresh-date-format: "ddd M/D h:mm A"
           debug-out: ${{ env.DEBUG_OUTPUT_FOLDER }}
+      - name: Run and Scrape Nissan Connect
+        id: scrape
+        uses: Wandalen/wretry.action@v3
+        env:
+          DEBUG_OUTPUT_FOLDER: ${{ env.DEBUG_OUTPUT_FOLDER }}
+        with:
+          command: ${{ steps.scraper.outputs.command }} >> $GITHUB_OUTPUT
+          attempt_limit: 3
+          attempt_delay: 2000 # ms
       - uses: actions/upload-artifact@v4
         if: failure()
         env:
