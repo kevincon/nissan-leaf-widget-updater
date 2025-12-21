@@ -2,8 +2,8 @@ name: Nissan Leaf Widget Updater
 on:
   schedule:
     # GitHub interprets this schedule in UTC
-    - cron: "5 13 * * *" # 6:05 am PT
-    - cron: "5 1 * * *" # 6:05 pm PT
+    - cron: "5 14 * * *" # 7:05 am PT
+    - cron: "5 2 * * *" # 7:05 pm PT
   workflow_dispatch:
 concurrency:
   group: hard-coded-so-only-one-instance-of-this-workflow-runs-at-a-time
