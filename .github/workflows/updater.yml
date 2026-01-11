@@ -27,13 +27,20 @@ jobs:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tags: ${{ secrets.TAILSCALE_TAGS }}
+      # # You can't set the exit-node name at 'up' time; so instead set it after
+      # # we've gotten up and running
+      # # https://github.com/tailscale/github-action/issues/123
+      # # https://github.com/tailscale/tailscale/issues/4152#issuecomment-1066126643
+      # - name: Use named exit node in Tailscale
+      #   run: |
+      #     timeout 5m sudo -E tailscale set --exit-node="${{ secrets.TAILSCALE_EXIT_NODE_NAME }}" --exit-node-allow-lan-access=true
       - name: Connect to Android device
         run: |
           adb connect ${{ secrets.ANDROID_DEVICE_ADB_ADDRESS }}
           [[ $(adb get-state) == "device" ]]
       - name: Set up scraper
         id: scraper
-        uses: kevincon/nissan-connect-scraper@v1
+        uses: kevincon/nissan-connect-scraper@fix-app-install
         env:
           DEBUG_OUTPUT_FOLDER: ${{ env.DEBUG_OUTPUT_FOLDER }}
         with:
@@ -53,14 +60,16 @@ jobs:
           command: ${{ steps.scraper.outputs.command }} >> $GITHUB_OUTPUT
           attempt_limit: 3
           attempt_delay: 2000 # ms
-      - uses: actions/upload-artifact@v4
+      - uses: AlexGidarakos/upload-encrypted-artifact@v1
         if: failure()
         env:
           DEBUG_OUTPUT_FOLDER: ${{ env.DEBUG_OUTPUT_FOLDER }}
         with:
-          name: debug-output
-          path: ${{ env.DEBUG_OUTPUT_FOLDER }}
-          if-no-files-found: ignore
+          remote-name: debug-output
+          local-name: debug-output.tar.7z
+          source: ${{ env.DEBUG_OUTPUT_FOLDER }}
+          password: ${{ secrets.ARTIFACT_PASSWORD }}
+          retention-days: 1
       - name: Send email
         uses: dawidd6/action-send-mail@v4
         with:
@@ -71,7 +80,7 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: "#nissan-connect"
           to: trigger@applet.ifttt.com
-          from: "\"Nissan Leaf Widget Updater\" <${{ secrets.SMTP_FROM_EMAIL_ADDRESS }}>"
+          from: '"Nissan Leaf Widget Updater" <${{ secrets.SMTP_FROM_EMAIL_ADDRESS }}>'
           body: |
             🔋 ${{ fromJSON(steps.scrape.outputs.outputs).battery-state-of-charge }}%
             🛞 ${{ fromJSON(steps.scrape.outputs.outputs).range-minimum }} - ${{ fromJSON(steps.scrape.outputs.outputs).range-maximum }} miles
