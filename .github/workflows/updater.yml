@@ -5,6 +5,11 @@ on:
     - cron: "5 14 * * *" # 7:05 am PT
     - cron: "5 2 * * *" # 7:05 pm PT
   workflow_dispatch:
+    inputs:
+      nissan_connect_version:
+        description: "Nissan Connect version"
+        required: false
+        type: string
 concurrency:
   group: hard-coded-so-only-one-instance-of-this-workflow-runs-at-a-time
   # We won't cancel in-progress jobs if a new one is triggered, though
@@ -38,8 +43,7 @@ jobs:
           DEBUG_OUTPUT_FOLDER: ${{ env.DEBUG_OUTPUT_FOLDER }}
         with:
           set-up-only: true
-          google-play-email: ${{ secrets.GOOGLE_PLAY_EMAIL }}
-          google-play-token: ${{ secrets.GOOGLE_PLAY_TOKEN }}
+          android-app-version: ${{ github.event.inputs.nissan_connect_version }}
           user-id: ${{ secrets.NISSAN_CONNECT_USER_ID }}
           password: ${{ secrets.NISSAN_CONNECT_PASSWORD }}
           last-refresh-date-format: "ddd M/D h:mm A"
@@ -71,7 +75,7 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: "#nissan-connect"
           to: trigger@applet.ifttt.com
-          from: "\"Nissan Leaf Widget Updater\" <${{ secrets.SMTP_FROM_EMAIL_ADDRESS }}>"
+          from: '"Nissan Leaf Widget Updater" <${{ secrets.SMTP_FROM_EMAIL_ADDRESS }}>'
           body: |
             🔋 ${{ fromJSON(steps.scrape.outputs.outputs).battery-state-of-charge }}%
             🛞 ${{ fromJSON(steps.scrape.outputs.outputs).range-minimum }} - ${{ fromJSON(steps.scrape.outputs.outputs).range-maximum }} miles
