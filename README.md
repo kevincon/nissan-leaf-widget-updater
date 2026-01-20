@@ -1,3 +1,6 @@
+> [!WARNING]
+> This project is archived and is no longer being maintained, see [this blog post](https://kevintechnology.com/posts/leaf-widget-response/) for more information.
+
 # Nissan Leaf Widget Updater
 
 ![GitHub License](https://img.shields.io/github/license/kevincon/nissan-leaf-widget-updater)
